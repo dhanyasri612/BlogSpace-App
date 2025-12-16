@@ -1,8 +1,19 @@
 import connectMongo from "../../../../utils/connectMongo";
 import PostModel from "../../../../models/postModel";
 import { NextResponse } from "next/server";
-import path from "path";
-import { writeFile, unlink } from "fs/promises";
+import cloudinary from "../../../../utils/cloudinary";
+
+const uploadToCloudinary = (fileBuffer, folder = "nextjs_blog") =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(fileBuffer);
+  });
 
 export async function GET(req,{params}) {
   try {
@@ -53,24 +64,8 @@ export async function PUT(req, {params}) {
 
     // Handle image update if a new image is provided
     if (image && image.size > 0) {
-      // Delete old image if it exists
-      if (post.image) {
-        try {
-          const oldImagePath = path.join(process.cwd(), "public", post.image);
-          await unlink(oldImagePath);
-        } catch (err) {
-          console.error("Error deleting old image:", err);
-          // Continue even if old image deletion fails
-        }
-      }
-
-      // Save new image
-      const bytes = await image.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const fileName = Date.now() + "-" + image.name;
-      const filePath = path.join(process.cwd(), "public/uploads", fileName);
-      await writeFile(filePath, buffer);
-      updateData.image = `/uploads/${fileName}`;
+      const buffer = Buffer.from(await image.arrayBuffer());
+      updateData.image = await uploadToCloudinary(buffer);
     }
 
     // Update the post
@@ -114,17 +109,6 @@ export async function DELETE(req, {params}) {
         { error: "Unauthorized: You can only delete your own posts" },
         { status: 403 }
       );
-    }
-
-    // Delete the image file if it exists
-    if (post.image) {
-      try {
-        const imagePath = path.join(process.cwd(), "public", post.image);
-        await unlink(imagePath);
-      } catch (err) {
-        console.error("Error deleting image file:", err);
-        // Continue with post deletion even if image deletion fails
-      }
     }
 
     // Delete the post

@@ -1,8 +1,7 @@
 import connectMongo from "../../../utils/connectMongo";
 import PostModel from "../../../models/postModel";
 import { NextResponse } from "next/server";
-import path from "path";
-import { writeFile } from "fs/promises";
+import cloudinary from "../../../utils/cloudinary";
 
 // Ensure User model is registered (needed for populate)
 // Using dynamic require for CommonJS module
@@ -14,10 +13,22 @@ try {
   import("../../../models/userModel").catch(() => {});
 }
 
+const uploadToCloudinary = (fileBuffer, folder = "nextjs_blog") =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(fileBuffer);
+  });
+
 export async function GET(req) {
   const query = req.nextUrl.searchParams.get("q");
   const userId = req.nextUrl.searchParams.get("userId");
- 
+
   try {
     await connectMongo();
 
@@ -42,25 +53,37 @@ export async function GET(req) {
         strictPopulate: false,
       })
       .sort({ created_at: -1 });
-    
+
     // Convert to plain objects with virtuals
-    const posts = postData.map(post => {
+    const posts = postData.map((post) => {
       const postObj = post.toObject({ virtuals: true });
-      // Ensure virtuals are included
       if (!postObj.short_description && postObj.description) {
-        postObj.short_description = postObj.description.substring(0, 200) + "...";
+        postObj.short_description =
+          postObj.description.substring(0, 200) + "...";
       }
       if (!postObj.created_at_formatted && postObj.created_at) {
         const date = new Date(postObj.created_at);
         const months = [
-          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
         ];
-        postObj.created_at_formatted = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+        postObj.created_at_formatted = `${date.getDate()} ${
+          months[date.getMonth()]
+        } ${date.getFullYear()}`;
       }
       return postObj;
     });
-    
+
     return NextResponse.json(posts);
   } catch (error) {
     console.error("Error fetching posts:", error);
@@ -88,23 +111,17 @@ export async function POST(req) {
       );
     }
 
-    let imagePath = "";
+    let imageUrl = "";
 
     if (image && image.size > 0) {
-      const bytes = await image.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-
-      const fileName = Date.now() + "-" + image.name;
-      const filePath = path.join(process.cwd(), "public/uploads", fileName);
-
-      await writeFile(filePath, buffer);
-      imagePath = `/uploads/${fileName}`;
+      const buffer = Buffer.from(await image.arrayBuffer());
+      imageUrl = await uploadToCloudinary(buffer);
     }
 
     const newPost = await PostModel.create({
       title,
       description: content,
-      image: imagePath,
+      image: imageUrl,
       user: author,
       created_at: new Date().toISOString(),
     });
