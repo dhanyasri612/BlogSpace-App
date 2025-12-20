@@ -3,30 +3,149 @@ import React from "react";
 import { useState } from "react";
 import Link from "next/link";
 
-
 const page = () => {
   const [user, setUser] = useState({});
   const [message, setMessage] = useState("");
-  const userHandle = (e) =>{
-    setUser({...user, [e.target.name]:e.target.value})
-  }
+  const [messageType, setMessageType] = useState("info"); // success, error, info
+  const [isValidating, setIsValidating] = useState(false);
+  const [emailValidation, setEmailValidation] = useState({ isValid: null, message: "" });
+  const userHandle = (e) => {
+    setUser({ ...user, [e.target.name]: e.target.value });
+    
+    // Reset email validation when email field changes
+    if (e.target.name === 'email') {
+      setEmailValidation({ isValid: null, message: "" });
+    }
+  };
+
+  // Debounced email validation
+  const validateEmailField = async (email) => {
+    if (!email) {
+      setEmailValidation({ isValid: null, message: "" });
+      return;
+    }
+
+    // Basic format check first
+    const isValidFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!isValidFormat) {
+      setEmailValidation({ isValid: false, message: "Invalid email format" });
+      return;
+    }
+
+    // Quick disposable email check
+    const disposableDomains = ['10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'tempmail.org', 'yopmail.com'];
+    const emailDomain = email.split('@')[1]?.toLowerCase();
+    if (disposableDomains.includes(emailDomain)) {
+      setEmailValidation({ isValid: false, message: "Disposable emails not allowed" });
+      return;
+    }
+
+    setEmailValidation({ isValid: null, message: "Checking..." });
+    
+    try {
+      const res = await fetch('/api/validate-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      const data = await res.json();
+      
+      if (data.isValid) {
+        setEmailValidation({ isValid: true, message: "" }); // Remove "Valid email" text
+      } else {
+        setEmailValidation({ isValid: false, message: data.errors?.join(', ') || "Invalid email" });
+      }
+    } catch (error) {
+      setEmailValidation({ isValid: false, message: "Unable to validate email" });
+    }
+  };
+
+  // Debounce email validation
+  React.useEffect(() => {
+    if (user.email) {
+      const timeoutId = setTimeout(() => {
+        validateEmailField(user.email);
+      }, 1000); // Wait 1 second after user stops typing
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [user.email]);
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Registration logic here
-    fetch(process.env.NEXT_PUBLIC_API_URL + "/user", {
-      method: "POST",
-      body: JSON.stringify(user),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        // Handle response
-        setUser({});
-       setMessage(res.message);
-        setTimeout(()=>{  
-          setMessage("");
-        },3000);
-      }); 
-  }
+    
+    // Basic client-side validation
+    if (!user.username || !user.email || !user.password) {
+      setMessage("Please fill in all fields");
+      setMessageType("error");
+      setTimeout(() => setMessage(""), 3000);
+      return;
+    }
+
+    // Basic email format check
+    const isValidEmail = (em) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
+    if (!isValidEmail(user.email)) {
+      setMessage("Please enter a valid email address format");
+      setMessageType("error");
+      setTimeout(() => setMessage(""), 3000);
+      return;
+    }
+
+    // Check for disposable email domains (basic client-side check)
+    const disposableDomains = ['10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'tempmail.org', 'yopmail.com'];
+    const emailDomain = user.email.split('@')[1]?.toLowerCase();
+    if (disposableDomains.includes(emailDomain)) {
+      setMessage("Disposable email addresses are not allowed. Please use a permanent email address.");
+      setMessageType("error");
+      setTimeout(() => setMessage(""), 5000);
+      return;
+    }
+
+    setMessage("Validating email address...");
+    setMessageType("info");
+    setIsValidating(true);
+
+    try {
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(user),
+      });
+      const data = await res.json();
+      
+      // Handle validation errors with detailed messages
+      if (!res.ok) {
+        if (data.errors && Array.isArray(data.errors)) {
+          setMessage(data.errors.join('. '));
+        } else {
+          setMessage(data.message || "Registration failed");
+        }
+        setMessageType("error");
+        setTimeout(() => setMessage(""), 5000);
+        return;
+      }
+
+      // Success case
+      const displayMessage = data.message || "Registration successful! Please check your email for verification.";
+      setMessage(displayMessage);
+      setMessageType("success");
+      setUser({});
+      
+      // Clear message after 5 seconds
+      setTimeout(() => {
+        setMessage("");
+      }, 5000);
+    } catch (err) {
+      setMessage("Registration failed. Please check your internet connection and try again.");
+      setMessageType("error");
+      setTimeout(() => setMessage(""), 3000);
+    } finally {
+      setIsValidating(false);
+    }
+  };
+  
   return (
     <div>
       <div>
@@ -49,19 +168,38 @@ const page = () => {
               style={{ background: "rgba(200, 244, 246, 1)" }}
               placeholder="Enter your name"
               name="username"
-              value={user.username??""}
+              value={user.username ?? ""}
               onChange={userHandle}
             />
             <label className="form-label mt-3">Email</label>
             <input
               type="email"
-              className="form-control"
+              className={`form-control ${
+                emailValidation.isValid === true 
+                  ? 'border-success' 
+                  : emailValidation.isValid === false 
+                  ? 'border-danger' 
+                  : ''
+              }`}
               style={{ background: "rgba(200, 244, 246, 1)" }}
               placeholder="Enter your email"
               name="email"
-              value={user.email??""}
+              value={user.email ?? ""}
               onChange={userHandle}
             />
+            {emailValidation.message && (
+              <small 
+                className={`form-text ${
+                  emailValidation.isValid === true 
+                    ? 'text-success' 
+                    : emailValidation.isValid === false 
+                    ? 'text-danger' 
+                    : 'text-muted'
+                }`}
+              >
+                {emailValidation.message}
+              </small>
+            )}
             <label className="form-label mt-3">Password</label>
             <input
               type="password"
@@ -69,11 +207,14 @@ const page = () => {
               style={{ background: "rgba(200, 244, 246, 1)" }}
               placeholder="Enter your password"
               name="password"
-              value={user.password??""}
+              value={user.password ?? ""}
               onChange={userHandle}
             />
-            <button className="btn btn-info mt-4 w-100 text-white">
-              Register
+            <button 
+              className="btn btn-info mt-4 w-100 text-white" 
+              disabled={isValidating}
+            >
+              {isValidating ? "Validating..." : "Register"}
             </button>
           </form>
           <p className="text-center text-secondary text-capitalize">
@@ -83,7 +224,15 @@ const page = () => {
         </div>
         <br />
         {message && (
-          <p className="text-center text-success font-weight-bold">
+          <p 
+            className={`text-center font-weight-bold ${
+              messageType === "success" 
+                ? "text-success" 
+                : messageType === "error" 
+                ? "text-danger" 
+                : "text-info"
+            }`}
+          >
             {message}
           </p>
         )}

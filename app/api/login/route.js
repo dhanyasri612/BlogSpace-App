@@ -11,6 +11,11 @@ export async function POST(req) {
         status: 404,
       });
     }
+    if (!user.isVerified) {
+      return new Response(JSON.stringify({ message: "Email not verified" }), {
+        status: 403,
+      });
+    }
     if (user.password !== password) {
       return new Response(JSON.stringify({ message: "Invalid password" }), {
         status: 401,
