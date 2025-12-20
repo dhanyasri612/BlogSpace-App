@@ -43,11 +43,18 @@ const page = () => {
     setEmailValidation({ isValid: null, message: "Checking..." });
     
     try {
+      // Add timeout to prevent long waits
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
       const res = await fetch('/api/validate-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       const data = await res.json();
       
@@ -57,7 +64,9 @@ const page = () => {
         setEmailValidation({ isValid: false, message: data.errors?.join(', ') || "Invalid email" });
       }
     } catch (error) {
-      setEmailValidation({ isValid: false, message: "Unable to validate email" });
+      // More graceful error handling - don't show error for network issues
+      console.warn('Email validation API unavailable:', error.message);
+      setEmailValidation({ isValid: null, message: "" }); // Clear validation state instead of showing error
     }
   };
 
