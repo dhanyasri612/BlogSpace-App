@@ -160,56 +160,65 @@ const page = () => {
             autoComplete="off"
             onSubmit={handleSubmit}
           >
-            <h2 className="text-center ">Register Page</h2>
-            <label className="form-label">UserName</label>
-            <input
-              type="text"
-              className="form-control"
-              style={{ background: "rgba(200, 244, 246, 1)" }}
-              placeholder="Enter your name"
-              name="username"
-              value={user.username ?? ""}
-              onChange={userHandle}
-            />
-            <label className="form-label mt-3">Email</label>
-            <input
-              type="email"
-              className={`form-control ${
-                emailValidation.isValid === true 
-                  ? 'border-success' 
-                  : emailValidation.isValid === false 
-                  ? 'border-danger' 
-                  : ''
-              }`}
-              style={{ background: "rgba(200, 244, 246, 1)" }}
-              placeholder="Enter your email"
-              name="email"
-              value={user.email ?? ""}
-              onChange={userHandle}
-            />
-            {emailValidation.message && (
-              <small 
-                className={`form-text ${
+            <h2 className="text-center mb-4">Register Page</h2>
+            
+            <div className="mb-3">
+              <label className="form-label">UserName</label>
+              <input
+                type="text"
+                className="form-control"
+                style={{ background: "rgba(200, 244, 246, 1)" }}
+                placeholder="Enter your name"
+                name="username"
+                value={user.username ?? ""}
+                onChange={userHandle}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                className={`form-control ${
                   emailValidation.isValid === true 
-                    ? 'text-success' 
+                    ? 'border-success' 
                     : emailValidation.isValid === false 
-                    ? 'text-danger' 
-                    : 'text-muted'
+                    ? 'border-danger' 
+                    : ''
                 }`}
-              >
-                {emailValidation.message}
-              </small>
-            )}
-            <label className="form-label mt-3">Password</label>
-            <input
-              type="password"
-              className="form-control"
-              style={{ background: "rgba(200, 244, 246, 1)" }}
-              placeholder="Enter your password"
-              name="password"
-              value={user.password ?? ""}
-              onChange={userHandle}
-            />
+                style={{ background: "rgba(200, 244, 246, 1)" }}
+                placeholder="Enter your email"
+                name="email"
+                value={user.email ?? ""}
+                onChange={userHandle}
+              />
+              {emailValidation.message && (
+                <div 
+                  className={`mt-1 ${
+                    emailValidation.isValid === true 
+                      ? 'text-success' 
+                      : emailValidation.isValid === false 
+                      ? 'text-danger' 
+                      : 'text-muted'
+                  }`}
+                  style={{ fontSize: '0.875rem' }}
+                >
+                  {emailValidation.message}
+                </div>
+              )}
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-control"
+                style={{ background: "rgba(200, 244, 246, 1)" }}
+                placeholder="Enter your password"
+                name="password"
+                value={user.password ?? ""}
+                onChange={userHandle}
+              />
+            </div>
             <button 
               className="btn btn-info mt-4 w-100 text-white" 
               disabled={isValidating}
