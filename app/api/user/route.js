@@ -1,6 +1,6 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
-import nodemailer from "nodemailer";
+import { sendVerificationEmail } from "@/utils/emailSender.js";
 import { validateEmail } from "@/utils/emailValidatorProduction.js";
 
 export async function GET(request) {
@@ -63,57 +63,18 @@ export async function POST(request) {
       "http://localhost:3000";
     const verifyLink = `${origin}/api/user/verify?token=${token}`;
 
-    // Try to send a verification email if SMTP is configured
+    // Send verification email using improved email sender
     let emailSent = false;
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = process.env.SMTP_PORT;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const fromEmail =
-      process.env.FROM_EMAIL || `no-reply@${new URL(origin).hostname}`;
-
-    if (smtpHost && smtpUser && smtpPass) {
-      try {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort ? Number(smtpPort) : 587,
-          secure: process.env.SMTP_SECURE === "true",
-          auth: { user: smtpUser, pass: smtpPass },
-        });
-
-        const mailOptions = {
-          from: fromEmail,
-          to: email,
-          subject: "Please verify your email",
-          html: `<p>Hi ${username},</p>
-                 <p>Thanks for registering. Click the link below to verify your email address:</p>
-                 <p><a href="${verifyLink}">Verify email</a></p>
-                 <p>If the link doesn't work, copy and paste this URL into your browser:</p>
-                 <p>${verifyLink}</p>`,
-        };
-
-        await transporter.sendMail(mailOptions);
-        emailSent = true;
-        console.log(`✅ Verification email sent successfully to ${email}`);
-      } catch (mailErr) {
-        // Log the error server-side. Keep going so user can still verify via link.
-        console.error(
-          "Verification email send failed:",
-          mailErr?.message || mailErr
-        );
-        console.error("SMTP Config check:", {
-          host: smtpHost,
-          port: smtpPort,
-          user: smtpUser ? smtpUser.substring(0, 3) + "***" : "not set",
-          pass: smtpPass ? "***set***" : "not set"
-        });
-      }
-    } else {
-      console.error("SMTP configuration incomplete:", {
-        host: !!smtpHost,
-        user: !!smtpUser,
-        pass: !!smtpPass
-      });
+    let emailMethod = '';
+    
+    try {
+      const emailResult = await sendVerificationEmail(email, username, verifyLink);
+      emailSent = emailResult.success;
+      emailMethod = emailResult.method;
+      console.log(`✅ Verification email sent via ${emailMethod} to ${email}`);
+    } catch (error) {
+      console.error('❌ All email sending methods failed:', error.message);
+      emailSent = false;
     }
 
     const responseMessage = emailSent
@@ -121,7 +82,8 @@ export async function POST(request) {
           message:
             "Registration successful. A verification email was sent to your address.",
           verifyLink: process.env.NODE_ENV === 'development' ? verifyLink : undefined,
-          emailSent: true
+          emailSent: true,
+          emailMethod: emailMethod
         }
       : {
           message:
