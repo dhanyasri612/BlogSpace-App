@@ -1,4 +1,4 @@
-import { validateEmail } from "@/utils/emailValidator.js";
+import { validateEmail } from "@/utils/emailValidatorProduction.js";
 
 export async function POST(request) {
   try {

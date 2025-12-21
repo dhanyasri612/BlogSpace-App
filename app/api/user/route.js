@@ -1,7 +1,7 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
 import nodemailer from "nodemailer";
-import { validateEmail } from "@/utils/emailValidator.js";
+import { validateEmail } from "@/utils/emailValidatorProduction.js";
 
 export async function GET(request) {
   return new Response("User GET request received");
