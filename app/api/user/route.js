@@ -94,25 +94,41 @@ export async function POST(request) {
 
         await transporter.sendMail(mailOptions);
         emailSent = true;
+        console.log(`✅ Verification email sent successfully to ${email}`);
       } catch (mailErr) {
         // Log the error server-side. Keep going so user can still verify via link.
         console.error(
           "Verification email send failed:",
           mailErr?.message || mailErr
         );
+        console.error("SMTP Config check:", {
+          host: smtpHost,
+          port: smtpPort,
+          user: smtpUser ? smtpUser.substring(0, 3) + "***" : "not set",
+          pass: smtpPass ? "***set***" : "not set"
+        });
       }
+    } else {
+      console.error("SMTP configuration incomplete:", {
+        host: !!smtpHost,
+        user: !!smtpUser,
+        pass: !!smtpPass
+      });
     }
 
     const responseMessage = emailSent
       ? {
           message:
             "Registration successful. A verification email was sent to your address.",
-          verifyLink: process.env.NODE_ENV === 'development' ? verifyLink : undefined
+          verifyLink: process.env.NODE_ENV === 'development' ? verifyLink : undefined,
+          emailSent: true
         }
       : {
           message:
-            "Registration successful. A verification email was sent to your address.",
-          verifyLink: process.env.NODE_ENV === 'development' ? verifyLink : undefined
+            "Registration successful, but email delivery failed. Please contact support for manual verification.",
+          verifyLink: process.env.NODE_ENV === 'development' ? verifyLink : undefined,
+          emailSent: false,
+          warning: "Email not sent - check server configuration"
         };
     
     return new Response(JSON.stringify(responseMessage), {
