@@ -1,6 +1,7 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
-import { sendVerificationEmail } from "@/utils/smtpEmailSender.js";
+import { sendVerificationEmail as sendViaSMTP } from "@/utils/smtpEmailSender.js";
+import { sendVerificationEmail as sendViaResend } from "@/utils/resendEmailSender.js";
 import { validateEmail } from "@/utils/emailValidator.js";
 
 export async function GET(request) {
