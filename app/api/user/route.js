@@ -61,23 +61,45 @@ export async function POST(request) {
     const origin = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const verifyLink = `${origin}/api/user/verify?token=${token}`;
 
-    // Send verification email via centralized SMTP helper
+    // Send verification email via Resend (preferred) or SMTP (fallback)
     let emailSent = false;
     let emailMethod = "";
-    try {
-      const result = await sendVerificationEmail(email, username, verifyLink);
-      if (result && result.success) {
-        emailSent = true;
-        emailMethod = "SMTP";
-      } else {
+    
+    // Try Resend first if API key is available
+    if (process.env.RESEND_API_KEY) {
+      try {
+        console.log("Attempting to send verification email via Resend...");
+        const result = await sendViaResend(email, username, verifyLink);
+        if (result && result.success) {
+          emailSent = true;
+          emailMethod = "Resend API";
+          console.log("✅ Email sent via Resend API");
+        }
+      } catch (resendErr) {
+        console.error("❌ Resend API failed:", resendErr.message);
+        // Continue to SMTP fallback
+      }
+    }
+
+    // Fallback to SMTP if Resend wasn't used or failed
+    if (!emailSent) {
+      try {
+        console.log("Attempting to send verification email via SMTP...");
+        const result = await sendViaSMTP(email, username, verifyLink);
+        if (result && result.success) {
+          emailSent = true;
+          emailMethod = "SMTP";
+          console.log("✅ Email sent via SMTP");
+        } else {
+          emailSent = false;
+        }
+      } catch (mailErr) {
+        console.error(
+          "❌ SMTP send failed:",
+          mailErr && mailErr.message ? mailErr.message : mailErr
+        );
         emailSent = false;
       }
-    } catch (mailErr) {
-      console.error(
-        "SMTP send failed:",
-        mailErr && mailErr.message ? mailErr.message : mailErr
-      );
-      emailSent = false;
     }
 
     const responseMessage = emailSent
