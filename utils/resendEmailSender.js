@@ -73,7 +73,14 @@ export async function sendVerificationEmail(to, username, verifyLink) {
   });
   
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    // Use global fetch or import it if needed
+    const fetchFunction = globalThis.fetch || fetch;
+    
+    if (!fetchFunction) {
+      throw new Error('fetch is not available in this environment');
+    }
+    
+    const response = await fetchFunction('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${resendApiKey}`,
