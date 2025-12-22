@@ -6,6 +6,12 @@ export async function sendVerificationEmail(to, username, verifyLink) {
   const resendApiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
   
+  console.log('🔍 Resend config check:', {
+    apiKeySet: !!resendApiKey,
+    fromEmail: fromEmail,
+    to: to
+  });
+  
   if (!resendApiKey) {
     throw new Error('RESEND_API_KEY environment variable not set');
   }
@@ -59,6 +65,13 @@ export async function sendVerificationEmail(to, username, verifyLink) {
     `
   };
   
+  console.log('📤 Sending email via Resend API...');
+  console.log('📧 Email data:', {
+    from: emailData.from,
+    to: emailData.to,
+    subject: emailData.subject
+  });
+  
   try {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -69,18 +82,22 @@ export async function sendVerificationEmail(to, username, verifyLink) {
       body: JSON.stringify(emailData)
     });
     
+    console.log(`📊 Resend API response status: ${response.status}`);
+    
     if (response.ok) {
       const result = await response.json();
       console.log(`✅ Email sent successfully via Resend to ${to}`);
+      console.log(`📧 Message ID: ${result.id}`);
       return { success: true, messageId: result.id };
     } else {
       const errorText = await response.text();
-      console.error('Resend API error:', response.status, errorText);
+      console.error('❌ Resend API error:', response.status, errorText);
       throw new Error(`Resend API error: ${response.status} - ${errorText}`);
     }
     
   } catch (error) {
-    console.error('Resend email send failed:', error.message);
+    console.error('❌ Resend email send failed:', error.message);
+    console.error('❌ Full error:', error);
     throw error;
   }
 }
