@@ -1,4 +1,4 @@
-const { Schema, models, model } = require("mongoose");
+import { Schema, models, model } from "mongoose";
 
 const enquirySchema = new Schema({
   name: {
@@ -18,4 +18,4 @@ const enquirySchema = new Schema({
 
 const enquiryModel = models.Enquiry || model("Enquiry", enquirySchema);
 
-module.exports = enquiryModel;
+export default enquiryModel;
