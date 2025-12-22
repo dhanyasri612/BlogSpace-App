@@ -61,12 +61,31 @@ export async function POST(request) {
     const origin = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const verifyLink = `${origin}/api/user/verify?token=${token}`;
 
-    // Send verification email via Resend (preferred) or SMTP (fallback)
+    // Send verification email via SMTP (preferred for Gmail) or Resend (fallback)
     let emailSent = false;
     let emailMethod = "";
     
-    // Try Resend first if API key is available
-    if (process.env.RESEND_API_KEY) {
+    // Priority 1: Try SMTP first (Best for Gmail/Outlook free sending)
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      try {
+        console.log("Attempting to send verification email via SMTP...");
+        const result = await sendViaSMTP(email, username, verifyLink);
+        if (result && result.success) {
+          emailSent = true;
+          emailMethod = "SMTP";
+          console.log("✅ Email sent via SMTP");
+        }
+      } catch (mailErr) {
+        console.error(
+          "❌ SMTP send failed:",
+          mailErr && mailErr.message ? mailErr.message : mailErr
+        );
+        // Fall through to Resend if SMTP fails
+      }
+    }
+    
+    // Priority 2: Try Resend if SMTP failed or not configured
+    if (!emailSent && process.env.RESEND_API_KEY) {
       try {
         console.log("Attempting to send verification email via Resend...");
         const result = await sendViaResend(email, username, verifyLink);
@@ -77,28 +96,6 @@ export async function POST(request) {
         }
       } catch (resendErr) {
         console.error("❌ Resend API failed:", resendErr.message);
-        // Continue to SMTP fallback
-      }
-    }
-
-    // Fallback to SMTP if Resend wasn't used or failed
-    if (!emailSent) {
-      try {
-        console.log("Attempting to send verification email via SMTP...");
-        const result = await sendViaSMTP(email, username, verifyLink);
-        if (result && result.success) {
-          emailSent = true;
-          emailMethod = "SMTP";
-          console.log("✅ Email sent via SMTP");
-        } else {
-          emailSent = false;
-        }
-      } catch (mailErr) {
-        console.error(
-          "❌ SMTP send failed:",
-          mailErr && mailErr.message ? mailErr.message : mailErr
-        );
-        emailSent = false;
       }
     }
 
