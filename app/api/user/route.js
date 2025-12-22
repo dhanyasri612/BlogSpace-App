@@ -1,6 +1,7 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
 import nodemailer from "nodemailer";
+import { sendVerificationEmail as sendViaResend } from "@/utils/resendEmailSender.js";
 import { validateEmail } from "@/utils/emailValidator.js";
 
 export async function GET(request) {
@@ -63,52 +64,73 @@ export async function POST(request) {
       "http://localhost:3000";
     const verifyLink = `${origin}/api/user/verify?token=${token}`;
 
-    // Send verification email using SMTP
+    // Send verification email - try Resend first, then SMTP fallback
     let emailSent = false;
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = process.env.SMTP_PORT;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const fromEmail = process.env.FROM_EMAIL || `no-reply@${new URL(origin).hostname}`;
-
-    if (smtpHost && smtpUser && smtpPass) {
+    let emailMethod = '';
+    
+    // Method 1: Try Resend API (works on hosting platforms)
+    if (process.env.RESEND_API_KEY) {
       try {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort ? Number(smtpPort) : 587,
-          secure: process.env.SMTP_SECURE === "true",
-          auth: { user: smtpUser, pass: smtpPass },
-        });
-
-        const mailOptions = {
-          from: fromEmail,
-          to: email,
-          subject: "Please verify your email - BlogSpace",
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #333;">Welcome to BlogSpace!</h2>
-              <p>Hi ${username},</p>
-              <p>Thanks for registering. Click the link below to verify your email address:</p>
-              <p><a href="${verifyLink}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
-              <p>If the button doesn't work, copy and paste this URL into your browser:</p>
-              <p>${verifyLink}</p>
-            </div>
-          `,
-        };
-
-        await transporter.sendMail(mailOptions);
+        console.log('📧 Trying Resend API...');
+        await sendViaResend(email, username, verifyLink);
         emailSent = true;
-        console.log(`✅ Verification email sent to ${email}`);
-      } catch (mailErr) {
-        console.error("Email send failed:", mailErr.message);
-        emailSent = false;
+        emailMethod = 'Resend API';
+        console.log(`✅ Email sent via Resend to ${email}`);
+      } catch (error) {
+        console.error('❌ Resend failed:', error.message);
+        // Continue to SMTP fallback
+      }
+    }
+    
+    // Method 2: SMTP fallback (for localhost)
+    if (!emailSent) {
+      const smtpHost = process.env.SMTP_HOST;
+      const smtpPort = process.env.SMTP_PORT;
+      const smtpUser = process.env.SMTP_USER;
+      const smtpPass = process.env.SMTP_PASS;
+      const fromEmail = process.env.FROM_EMAIL || `no-reply@${new URL(origin).hostname}`;
+
+      if (smtpHost && smtpUser && smtpPass) {
+        try {
+          console.log('📧 Trying SMTP...');
+          const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort ? Number(smtpPort) : 587,
+            secure: process.env.SMTP_SECURE === "true",
+            auth: { user: smtpUser, pass: smtpPass },
+          });
+
+          const mailOptions = {
+            from: fromEmail,
+            to: email,
+            subject: "Please verify your email - BlogSpace",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">Welcome to BlogSpace!</h2>
+                <p>Hi ${username},</p>
+                <p>Thanks for registering. Click the link below to verify your email address:</p>
+                <p><a href="${verifyLink}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
+                <p>If the button doesn't work, copy and paste this URL into your browser:</p>
+                <p>${verifyLink}</p>
+              </div>
+            `,
+          };
+
+          await transporter.sendMail(mailOptions);
+          emailSent = true;
+          emailMethod = 'SMTP';
+          console.log(`✅ Email sent via SMTP to ${email}`);
+        } catch (mailErr) {
+          console.error("SMTP send failed:", mailErr.message);
+        }
       }
     }
 
     const responseMessage = emailSent
       ? {
           message: "Registration successful. A verification email was sent to your address.",
-          verifyLink: process.env.NODE_ENV === 'development' ? verifyLink : undefined
+          verifyLink: process.env.NODE_ENV === 'development' ? verifyLink : undefined,
+          emailMethod: emailMethod
         }
       : {
           message: "Registration successful, but email delivery failed. Please contact support for manual verification.",
