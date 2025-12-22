@@ -90,9 +90,9 @@ export async function POST(request) {
         }
       : {
           message:
-            "Registration successful, but email delivery failed. Please contact support for manual verification.",
-          verifyLink:
-            process.env.NODE_ENV === "development" ? verifyLink : undefined,
+            "Registration successful! Please use this link to verify your email:",
+          verifyLink: verifyLink,
+          note: "Email delivery is temporarily unavailable. Please bookmark this verification link."
         };
 
     return new Response(JSON.stringify(responseMessage), {

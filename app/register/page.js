@@ -137,15 +137,21 @@ const page = () => {
       }
 
       // Success case
-      const displayMessage = data.message || "Registration successful! Please check your email for verification.";
+      let displayMessage = data.message || "Registration successful! Please check your email for verification.";
+      
+      // If there's a verification link (when email fails), show it
+      if (data.verifyLink && !data.emailMethod) {
+        displayMessage += ` Click here to verify: ${data.verifyLink}`;
+      }
+      
       setMessage(displayMessage);
       setMessageType("success");
       setUser({});
       
-      // Clear message after 5 seconds
+      // Clear message after 10 seconds (longer for verification link)
       setTimeout(() => {
         setMessage("");
-      }, 5000);
+      }, 10000);
     } catch (err) {
       setMessage("Registration failed. Please check your internet connection and try again.");
       setMessageType("error");
