@@ -1,7 +1,6 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
 import nodemailer from "nodemailer";
-import { sendVerificationEmail as sendViaResend } from "@/utils/resendEmailSender.js";
 import { validateEmail } from "@/utils/emailValidator.js";
 
 export async function GET(request) {
@@ -64,66 +63,69 @@ export async function POST(request) {
       "http://localhost:3000";
     const verifyLink = `${origin}/api/user/verify?token=${token}`;
 
-    // Send verification email - try Resend first, then SMTP fallback
+    // Send verification email - simplified approach
     let emailSent = false;
     let emailMethod = '';
     
-    // Method 1: Try Resend API (works on hosting platforms)
-    if (process.env.RESEND_API_KEY) {
+    // For now, let's just use SMTP with better error handling
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const fromEmail = process.env.FROM_EMAIL || `no-reply@${new URL(origin).hostname}`;
+
+    if (smtpHost && smtpUser && smtpPass) {
       try {
-        console.log('📧 Trying Resend API...');
-        await sendViaResend(email, username, verifyLink);
-        emailSent = true;
-        emailMethod = 'Resend API';
-        console.log(`✅ Email sent via Resend to ${email}`);
-      } catch (error) {
-        console.error('❌ Resend failed:', error.message);
-        // Continue to SMTP fallback
-      }
-    }
-    
-    // Method 2: SMTP fallback (for localhost)
-    if (!emailSent) {
-      const smtpHost = process.env.SMTP_HOST;
-      const smtpPort = process.env.SMTP_PORT;
-      const smtpUser = process.env.SMTP_USER;
-      const smtpPass = process.env.SMTP_PASS;
-      const fromEmail = process.env.FROM_EMAIL || `no-reply@${new URL(origin).hostname}`;
+        console.log('📧 Trying SMTP email delivery...');
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort ? Number(smtpPort) : 587,
+          secure: process.env.SMTP_SECURE === "true",
+          auth: { user: smtpUser, pass: smtpPass },
+          // Add timeout and connection options for better reliability
+          connectionTimeout: 10000,
+          greetingTimeout: 5000,
+          socketTimeout: 10000,
+        });
 
-      if (smtpHost && smtpUser && smtpPass) {
-        try {
-          console.log('📧 Trying SMTP...');
-          const transporter = nodemailer.createTransport({
-            host: smtpHost,
-            port: smtpPort ? Number(smtpPort) : 587,
-            secure: process.env.SMTP_SECURE === "true",
-            auth: { user: smtpUser, pass: smtpPass },
-          });
-
-          const mailOptions = {
-            from: fromEmail,
-            to: email,
-            subject: "Please verify your email - BlogSpace",
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #333;">Welcome to BlogSpace!</h2>
-                <p>Hi ${username},</p>
-                <p>Thanks for registering. Click the link below to verify your email address:</p>
-                <p><a href="${verifyLink}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
-                <p>If the button doesn't work, copy and paste this URL into your browser:</p>
-                <p>${verifyLink}</p>
+        const mailOptions = {
+          from: fromEmail,
+          to: email,
+          subject: "Please verify your email - BlogSpace",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #333;">Welcome to BlogSpace!</h2>
+              <p>Hi ${username},</p>
+              <p>Thanks for registering with BlogSpace! Please click the button below to verify your email address:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${verifyLink}" 
+                   style="background-color: #007bff; color: white; padding: 15px 30px; 
+                          text-decoration: none; border-radius: 8px; font-weight: bold;
+                          display: inline-block;">
+                  Verify Email Address
+                </a>
               </div>
-            `,
-          };
+              <p>If the button doesn't work, copy and paste this URL into your browser:</p>
+              <p style="word-break: break-all; color: #007bff;">${verifyLink}</p>
+              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+              <p style="color: #666; font-size: 12px;">
+                This email was sent from BlogSpace. If you didn't create an account, you can safely ignore this email.
+              </p>
+            </div>
+          `,
+        };
 
-          await transporter.sendMail(mailOptions);
-          emailSent = true;
-          emailMethod = 'SMTP';
-          console.log(`✅ Email sent via SMTP to ${email}`);
-        } catch (mailErr) {
-          console.error("SMTP send failed:", mailErr.message);
-        }
+        await transporter.sendMail(mailOptions);
+        emailSent = true;
+        emailMethod = 'SMTP';
+        console.log(`✅ Email sent via SMTP to ${email}`);
+      } catch (mailErr) {
+        console.error("SMTP send failed:", mailErr.message);
+        emailSent = false;
       }
+    } else {
+      console.error("SMTP configuration missing");
+      emailSent = false;
     }
 
     const responseMessage = emailSent
