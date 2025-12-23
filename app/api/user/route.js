@@ -89,16 +89,18 @@ export async function POST(request) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const verifyLink = `${baseUrl}/api/user/verify/${createdUser._id}/${verificationToken}`;
     
-    const emailSent = await sendEmail(
+    const emailResult = await sendEmail(
       user.email,
       "Verify your email address",
       `Welcome to our blog! Please verify your email by clicking the following link: ${verifyLink}`
     );
 
-    if (!emailSent) {
+    if (!emailResult.success) {
        return new Response(JSON.stringify({ 
          message: "Registration successful, but email sending failed.",
-         warning: "Please contact support if you don't receive an email."
+         warning: "Please contact support if you don't receive an email.",
+         error: emailResult.error,
+         code: emailResult.code
        }), {
         status: 201,
         headers: getCorsHeaders(request),
