@@ -1,5 +1,6 @@
 import connectMongo from "@/utils/connectMongo";
 import EnquiryModel from "@/models/enquiryModel";
+export const runtime = "nodejs";
 export async function POST(req) {
   try {
     const { name, email, message } = await req.json();

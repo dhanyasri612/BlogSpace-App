@@ -1,6 +1,8 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
 
+export const runtime = "nodejs";
+
 export async function GET(_request, { params }) {
   try {
     const { id, token } = await params;

@@ -1,5 +1,7 @@
 import { validateEmail } from "@/utils/validation.js";
 
+export const runtime = "nodejs";
+
 export async function POST(request) {
   try {
     const { email } = await request.json();

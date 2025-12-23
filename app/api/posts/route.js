@@ -4,6 +4,8 @@ import "../../../models/userModel";
 import { NextResponse } from "next/server";
 import cloudinary from "../../../utils/cloudinary";
 
+export const runtime = "nodejs";
+
 // CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

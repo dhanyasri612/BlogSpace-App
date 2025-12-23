@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import connectMongo from "../../../utils/connectMongo";
 import PostModel from "../../../models/postModel";
 
+export const runtime = "nodejs";
+
 export async function POST(req) {
   try {
     await connectMongo();

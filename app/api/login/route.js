@@ -1,6 +1,8 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
 
+export const runtime = "nodejs";
+
 // CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

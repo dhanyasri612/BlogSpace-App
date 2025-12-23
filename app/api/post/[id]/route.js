@@ -4,6 +4,8 @@ import "../../../../models/userModel";
 import { NextResponse } from "next/server";
 import cloudinary from "../../../../utils/cloudinary";
 
+export const runtime = "nodejs";
+
 const uploadToCloudinary = (fileBuffer, folder = "nextjs_blog") =>
   new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(

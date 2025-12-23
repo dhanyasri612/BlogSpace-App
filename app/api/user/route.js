@@ -1,7 +1,9 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
-import { sendVerificationEmail } from "@/utils/smtpEmailSender.js";
+import sendEmail from "@/utils/emailValidator.js";
 import { validateEmail } from "@/utils/validation.js";
+
+export const runtime = "nodejs";
 
 // CORS headers for cross-origin requests
 const corsHeaders = {
@@ -93,19 +95,15 @@ export async function POST(request) {
 
     // Build a verification link for testing / manual email delivery
     const origin = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    const verifyLink = `${origin}/api/user/verify?token=${token}`;
+    const verifyLink = `${origin}/api/user/verify/${created._id}/${token}`;
 
-    // Send verification email via centralized SMTP helper
     let emailSent = false;
-    let emailMethod = "";
     try {
-      const result = await sendVerificationEmail(email, username, verifyLink);
-      if (result && result.success) {
-        emailSent = true;
-        emailMethod = "SMTP";
-      } else {
-        emailSent = false;
-      }
+      emailSent = await sendEmail(
+        email,
+        "Verify your email address",
+        `Welcome to our blog! Please verify your email by clicking the following link: ${verifyLink}`
+      );
     } catch (mailErr) {
       console.error(
         "SMTP send failed:",
@@ -120,7 +118,6 @@ export async function POST(request) {
             "Registration successful. A verification email was sent to your address.",
           verifyLink:
             process.env.NODE_ENV === "development" ? verifyLink : undefined,
-          emailMethod: emailMethod,
         }
       : {
           message:

@@ -3,6 +3,8 @@ import PostModel from "../../../models/postModel";
 import "../../../models/userModel";
 import PostActions from "../../../components/PostActions";
 
+export const runtime = "nodejs";
+
 export default async function PostPage({ params }) {
   const { id } = await params; // Add await here for Next.js 15+
 
