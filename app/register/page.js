@@ -1,9 +1,8 @@
 "use client";
-import React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
-export default function Page() {
+export default function RegisterPage() {
   const [user, setUser] = useState({});
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info"); // success, error, info
@@ -63,13 +62,15 @@ export default function Page() {
       } else {
         setEmailValidation({ isValid: false, message: data.errors?.join(', ') || "Invalid email" });
       }
-    } catch {
+    } catch (error) {
+      // More graceful error handling - don't show error for network issues
+      console.warn('Email validation API unavailable:', error.message);
       setEmailValidation({ isValid: null, message: "" }); // Clear validation state instead of showing error
     }
   };
 
   // Debounce email validation
-  React.useEffect(() => {
+  useEffect(() => {
     if (user.email) {
       const timeoutId = setTimeout(() => {
         validateEmailField(user.email);
@@ -113,7 +114,7 @@ export default function Page() {
     setIsValidating(true);
 
     try {
-      const res = await fetch("/api/user", {
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -144,7 +145,7 @@ export default function Page() {
       setTimeout(() => {
         setMessage("");
       }, 10000);
-    } catch {
+    } catch (err) {
       setMessage("Registration failed. Please check your internet connection and try again.");
       setMessageType("error");
       setTimeout(() => setMessage(""), 3000);

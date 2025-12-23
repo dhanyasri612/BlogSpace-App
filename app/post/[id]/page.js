@@ -1,9 +1,10 @@
 import connectMongo from "../../../utils/connectMongo";
 import PostModel from "../../../models/postModel";
+import "../../../models/userModel";
 import PostActions from "../../../components/PostActions";
 
 export default async function PostPage({ params }) {
-  const { id } = await params;
+  const { id } = params;
 
   let post = null;
   try {
@@ -15,6 +16,11 @@ export default async function PostPage({ params }) {
   }
   return (
     <div className="mt-3 mx-2">
+      {!post && (
+        <div className="p-5 text-center">
+          <h3>Post not found</h3>
+        </div>
+      )}
       {post && (
         <div
           style={{ background: "rgba(255, 255, 255, 1)" }}

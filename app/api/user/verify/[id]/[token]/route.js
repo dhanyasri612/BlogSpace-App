@@ -1,7 +1,7 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
 
-export async function GET(request, { params }) {
+export async function GET(_request, { params }) {
   try {
     const { id, token } = await params;
 
@@ -22,7 +22,7 @@ export async function GET(request, { params }) {
       JSON.stringify({ message: "Email verified successfully" }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch {
     return new Response(JSON.stringify({ message: "Internal Server Error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

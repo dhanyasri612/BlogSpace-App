@@ -2,12 +2,30 @@
 
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import { usePathname } from "next/navigation";
+
+const readStoredUser = () => {
+  if (typeof window === "undefined") return null;
+
+  const storedUser = localStorage.getItem("user");
+  try {
+    if (
+      storedUser &&
+      storedUser !== "undefined" &&
+      storedUser !== "null" &&
+      storedUser.trim() !== ""
+    ) {
+      return JSON.parse(storedUser);
+    }
+    return null;
+  } catch {
+    localStorage.removeItem("user");
+    return null;
+  }
+};
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const pathname = usePathname();
+  const [user, setUser] = useState(readStoredUser);
 
   const handleLinkClick = () => {
     setMenuOpen(false);
@@ -15,26 +33,7 @@ export default function Header() {
 
   // Function to check and update user state
   const checkUser = useCallback(() => {
-    if (typeof window !== "undefined") {
-      const storedUser = localStorage.getItem("user");
-      try {
-        if (
-          storedUser &&
-          storedUser !== "undefined" &&
-          storedUser !== "null" &&
-          storedUser.trim() !== ""
-        ) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Invalid JSON in localStorage → clearing user", error);
-        localStorage.removeItem("user");
-        setUser(null);
-      }
-    }
+    setUser(readStoredUser());
   }, []);
 
   useEffect(() => {
@@ -47,27 +46,17 @@ export default function Header() {
 
     // Listen for custom event (when user logs in/out in same window)
     const handleUserChange = () => {
-      // Small delay to ensure localStorage is updated
-      setTimeout(() => {
-        checkUser();
-      }, 100);
+      checkUser();
     };
 
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("userStateChange", handleUserChange);
 
-    // Also check when pathname changes (in case user navigates after login)
-    // Add a small delay to ensure localStorage is ready
-    const timeoutId = setTimeout(() => {
-      checkUser();
-    }, 100);
-
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("userStateChange", handleUserChange);
-      clearTimeout(timeoutId);
     };
-  }, [pathname, checkUser]);
+  }, [checkUser]);
 
   // Also check user state on focus (when user returns to tab)
   useEffect(() => {
@@ -77,11 +66,6 @@ export default function Header() {
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
   }, [checkUser]);
-
-  // Get first letter of username
-  const getInitial = (username) => {
-    return username ? username.charAt(0).toUpperCase() : "U";
-  };
 
   return (
     <nav className="c-navbar">

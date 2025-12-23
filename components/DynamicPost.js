@@ -111,35 +111,37 @@ const DynamicPost = ({ showOnlyCurrentUserPosts = false }) => {
       <div className="row">
         {post.map((item) => (
           <div key={item._id} className="col-12 col-md-6 col-lg-4 mb-4">
-            <div className="card h-100 shadow-sm position-relative">
-              {/* IMAGE (SAFE RENDER) */}
-              {item.image && item.image.trim() !== "" && (
-                <Link href={`/post/${item._id}`}>
+            <Link
+              href={`/post/${item._id}`}
+              className="text-reset text-decoration-none"
+            >
+              <div className="card h-100 shadow-sm position-relative">
+                {item.image && item.image.trim() !== "" && (
                   <img
                     src={item.image}
                     alt={item.title}
                     className="card-img-top"
                   />
-                </Link>
-              )}
-
-              <div className="card-body">
-                <h6 className="card-title">{item.title}</h6>
-
-                {(item.author || item.user) && (
-                  <small className="text-muted d-block mb-2">
-                    <strong>By:</strong>{" "}
-                    {(item.author &&
-                      (item.author.username || item.author.email)) ||
-                      (item.user && (item.user.username || item.user.email))}
-                  </small>
                 )}
 
-                <p className="card-text text-justify">
-                  {item.short_description}
-                </p>
+                <div className="card-body">
+                  <h6 className="card-title">{item.title}</h6>
+
+                  {(item.author || item.user) && (
+                    <small className="text-muted d-block mb-2">
+                      <strong>By:</strong>{" "}
+                      {(item.author &&
+                        (item.author.username || item.author.email)) ||
+                        (item.user && (item.user.username || item.user.email))}
+                    </small>
+                  )}
+
+                  <p className="card-text text-justify">
+                    {item.short_description}
+                  </p>
+                </div>
               </div>
-            </div>
+            </Link>
           </div>
         ))}
       </div>

@@ -1,17 +1,8 @@
 import connectMongo from "../../../utils/connectMongo";
 import PostModel from "../../../models/postModel";
+import "../../../models/userModel";
 import { NextResponse } from "next/server";
 import cloudinary from "../../../utils/cloudinary";
-
-// Ensure User model is registered (needed for populate)
-// Using dynamic require for CommonJS module
-let UserModel;
-try {
-  UserModel = require("../../../models/userModel");
-} catch (e) {
-  // If require fails, try import
-  import("../../../models/userModel").catch(() => {});
-}
 
 const uploadToCloudinary = (fileBuffer, folder = "nextjs_blog") =>
   new Promise((resolve, reject) => {

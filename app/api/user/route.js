@@ -1,10 +1,10 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
 import sendEmail from "@/utils/emailValidator.js";
-import { validateEmailQuick } from "@/utils/validation.js";
+import { validateEmail } from "@/utils/validation.js";
 import crypto from "crypto";
 
-export async function GET(request) {
+export async function GET() {
   return new Response("User GET request received");
 }
 
@@ -22,8 +22,8 @@ export async function POST(request) {
       );
     }
 
-    // Email validation (quick server-side check)
-    const emailValidation = await validateEmailQuick(email);
+    // Enhanced email validation
+    const emailValidation = await validateEmail(email);
     if (!emailValidation.isValid) {
       return new Response(
         JSON.stringify({
@@ -45,16 +45,6 @@ export async function POST(request) {
         { status: 409, headers: { "Content-Type": "application/json" } }
       );
     }
-    
-    const existingUsername = await userModel.findOne({
-      username: username.trim(),
-    });
-    if (existingUsername) {
-      return new Response(
-        JSON.stringify({ message: "Username already taken" }),
-        { status: 409, headers: { "Content-Type": "application/json" } }
-      );
-    }
 
     // Create verification token
     const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -67,30 +57,10 @@ export async function POST(request) {
       verificationToken: verificationToken
     };
     
-    let createdUser;
-    try {
-      createdUser = await userModel.create(user);
-    } catch (err) {
-      // Handle duplicate key errors gracefully
-      if (err && err.code === 11000) {
-        const dupField = Object.keys(err.keyPattern || err.keyValue || {})[0] || "field";
-        const msg =
-          dupField === "email"
-            ? "Email already registered"
-            : dupField === "username"
-            ? "Username already taken"
-            : "Duplicate value";
-        return new Response(
-          JSON.stringify({ message: msg }),
-          { status: 409, headers: { "Content-Type": "application/json" } }
-        );
-      }
-      throw err;
-    }
+    const createdUser = await userModel.create(user);
 
     // Send verification email
-    const requestOrigin = new URL(request.url).origin;
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || requestOrigin;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const verifyLink = `${baseUrl}/api/user/verify/${createdUser._id}/${verificationToken}`;
     
     const emailSent = await sendEmail(

@@ -5,7 +5,7 @@ import DynamicPost from "@/components/DynamicPost";
 export default function Home() {
   const inputRef = useRef("");
   const searchPost = () =>{
-    fetch("/api/posts?q=" + inputRef.current.value)
+    fetch(process.env.NEXT_PUBLIC_API_URL + "/posts?q=" + inputRef.current.value)
     .then((res) => res.json())
 
   }

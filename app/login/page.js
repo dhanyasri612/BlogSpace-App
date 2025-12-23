@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function Page() {
-  const Router = useRouter();
+export default function LoginPage() {
+  const router = useRouter();
   const [form, setForm] = useState({});
   function saveForm(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -14,7 +14,7 @@ export default function Page() {
   async function handleSubmit(e) {
     e.preventDefault();
     // Login logic here
-    const res = await fetch("/api/login", {
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -31,8 +31,8 @@ export default function Page() {
         window.dispatchEvent(new Event("userStateChange"));
         // Small delay before navigation to ensure state is set
         setTimeout(() => {
-          Router.push("/");
-          Router.refresh(); // Force refresh to update the page
+          router.push("/");
+          router.refresh(); // Force refresh to update the page
         }, 100);
       } else {
         alert("Login successful but user data not received");
@@ -78,7 +78,7 @@ export default function Page() {
           <button className="btn btn-info mt-4 w-100 text-white">Login</button>
         </form>
         <p className="text-center text-secondary text-capitalize">
-          Don't have an account? <Link href="/register">Register</Link>
+          Don&apos;t have an account? <Link href="/register">Register</Link>
         </p>
       </div>
       <br />

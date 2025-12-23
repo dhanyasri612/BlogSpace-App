@@ -1,5 +1,6 @@
 import connectMongo from "../../../../utils/connectMongo";
 import PostModel from "../../../../models/postModel";
+import "../../../../models/userModel";
 import { NextResponse } from "next/server";
 import cloudinary from "../../../../utils/cloudinary";
 
