@@ -63,7 +63,7 @@ export default function Page() {
       } else {
         setEmailValidation({ isValid: false, message: data.errors?.join(', ') || "Invalid email" });
       }
-    } catch (error) {
+    } catch {
       setEmailValidation({ isValid: null, message: "" }); // Clear validation state instead of showing error
     }
   };
@@ -113,7 +113,7 @@ export default function Page() {
     setIsValidating(true);
 
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/user", {
+      const res = await fetch("/api/user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -144,7 +144,7 @@ export default function Page() {
       setTimeout(() => {
         setMessage("");
       }, 10000);
-    } catch (err) {
+    } catch {
       setMessage("Registration failed. Please check your internet connection and try again.");
       setMessageType("error");
       setTimeout(() => setMessage(""), 3000);
