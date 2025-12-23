@@ -1,7 +1,7 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
 import sendEmail from "@/utils/emailValidator.js";
-import { validateEmail } from "@/utils/validation.js";
+import { validateEmailQuick } from "@/utils/validation.js";
 import crypto from "crypto";
 
 export async function GET(request) {
@@ -22,8 +22,8 @@ export async function POST(request) {
       );
     }
 
-    // Enhanced email validation
-    const emailValidation = await validateEmail(email);
+    // Email validation (quick server-side check)
+    const emailValidation = await validateEmailQuick(email);
     if (!emailValidation.isValid) {
       return new Response(
         JSON.stringify({
@@ -45,6 +45,16 @@ export async function POST(request) {
         { status: 409, headers: { "Content-Type": "application/json" } }
       );
     }
+    
+    const existingUsername = await userModel.findOne({
+      username: username.trim(),
+    });
+    if (existingUsername) {
+      return new Response(
+        JSON.stringify({ message: "Username already taken" }),
+        { status: 409, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     // Create verification token
     const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -57,7 +67,26 @@ export async function POST(request) {
       verificationToken: verificationToken
     };
     
-    const createdUser = await userModel.create(user);
+    let createdUser;
+    try {
+      createdUser = await userModel.create(user);
+    } catch (err) {
+      // Handle duplicate key errors gracefully
+      if (err && err.code === 11000) {
+        const dupField = Object.keys(err.keyPattern || err.keyValue || {})[0] || "field";
+        const msg =
+          dupField === "email"
+            ? "Email already registered"
+            : dupField === "username"
+            ? "Username already taken"
+            : "Duplicate value";
+        return new Response(
+          JSON.stringify({ message: msg }),
+          { status: 409, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      throw err;
+    }
 
     // Send verification email
     const requestOrigin = new URL(request.url).origin;
