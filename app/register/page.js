@@ -137,22 +137,7 @@ const page = () => {
       }
 
       // Success case
-      let displayMessage = data.message || "Registration successful! Please check your email for verification.";
-      
-      // If there's a debug error (from failed email send), log it
-      if (data.debugError) {
-        console.error("📧 Email sending failed:", data.debugError);
-        // Optionally append to message if in development or specifically requested
-        if (process.env.NODE_ENV === 'development' || displayMessage.includes("failed")) {
-          console.log("Debug info:", data.debugError);
-        }
-      }
-      
-      // If there's a verification link (when email fails), show it
-      if (data.verifyLink && !data.emailMethod) {
-        displayMessage += ` Click here to verify: ${data.verifyLink}`;
-      }
-      
+      let displayMessage = data.message || "Registration successful.";
       setMessage(displayMessage);
       setMessageType("success");
       setUser({});
