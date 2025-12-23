@@ -3,7 +3,7 @@ import React from "react";
 import { useState } from "react";
 import Link from "next/link";
 
-const page = () => {
+const Page = () => {
   const [user, setUser] = useState({});
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info"); // success, error, info
@@ -115,7 +115,9 @@ const page = () => {
     setIsValidating(true);
 
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/user", {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL;
+      const url = apiBase ? `${apiBase}/user` : "/api/user";
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -264,4 +266,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

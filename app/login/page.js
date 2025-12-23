@@ -26,7 +26,9 @@ const LoginForm = () => {
   async function handleSubmit(e) {
     e.preventDefault();
     // Login logic here
-    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/login", {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL;
+    const url = apiBase ? `${apiBase}/login` : "/api/login";
+    const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
