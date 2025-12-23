@@ -3,7 +3,7 @@ import userModel from "@/models/userModel.js";
 import { sendVerificationEmail } from "@/utils/smtpEmailSender.js";
 import { validateEmail } from "@/utils/validation.js";
 
-// CORS headers
+// CORS headers for cross-origin requests
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
