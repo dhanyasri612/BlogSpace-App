@@ -4,12 +4,14 @@ import "../../../models/userModel";
 import PostActions from "../../../components/PostActions";
 
 export default async function PostPage({ params }) {
-  const { id } = params;
+  const { id } = await params; // Add await here for Next.js 15+
 
   let post = null;
   try {
     await connectMongo();
+    console.log("Fetching post with ID:", id);
     post = await PostModel.findOne({ _id: id }).populate('user', 'username email');
+    console.log("Post found:", post ? "Yes" : "No");
   } catch (error) {
     console.error("Error fetching post:", error);
     post = null;

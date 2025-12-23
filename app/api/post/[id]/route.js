@@ -19,10 +19,13 @@ const uploadToCloudinary = (fileBuffer, folder = "nextjs_blog") =>
 export async function GET(req,{params}) {
   try {
     await connectMongo();
-    const {id} = await params;
+    const {id} = params; // Remove await here since params is not a promise
+    console.log("Fetching post with ID:", id);
     const postData = await PostModel.findOne({_id:id}).populate('user', 'username email');
+    console.log("Post data found:", postData ? "Yes" : "No");
     return NextResponse.json(postData);
   } catch (error) {
+    console.error("Error in GET /api/post/[id]:", error);
     return NextResponse.json(
       { error: error.message },
       { status: 500 }
@@ -33,7 +36,7 @@ export async function GET(req,{params}) {
 export async function PUT(req, {params}) {
   try {
     await connectMongo();
-    const {id} = await params;
+    const {id} = params; // Remove await here
     const data = await req.formData();
     const title = data.get("title");
     const content = data.get("content");
@@ -89,7 +92,7 @@ export async function PUT(req, {params}) {
 export async function DELETE(req, {params}) {
   try {
     await connectMongo();
-    const {id} = await params;
+    const {id} = params; // Remove await here
     
     // Get userId from query params or headers
     const url = new URL(req.url);
