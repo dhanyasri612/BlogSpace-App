@@ -89,22 +89,32 @@ const DynamicPost = ({ showOnlyCurrentUserPosts = false }) => {
   return (
     <div>
       {/* SEARCH BAR */}
-      <div className="d-flex justify-content-end mb-4">
-        <input
-          ref={inputRef}
-          onKeyDown={searchPost}
-          type="text"
-          className="form-control me-2"
-          placeholder="Search Blogs..."
-          style={{ width: "350px" }}
-        />
-        <button
-          className="btn btn-success"
-          onClick={searchPost}
-          disabled={search}
-        >
-          {search ? "Searching..." : "Search"}
-        </button>
+      <div className="search-container">
+        <div className="search-wrapper">
+          <input
+            ref={inputRef}
+            onKeyDown={searchPost}
+            type="text"
+            className="form-control search-input"
+            placeholder="Search for stories, topics, or authors..."
+          />
+          <button
+            className="btn btn-success search-btn"
+            onClick={searchPost}
+            disabled={search}
+          >
+            {search ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                Searching...
+              </>
+            ) : (
+              <>
+                🔍 Search
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* POSTS */}
