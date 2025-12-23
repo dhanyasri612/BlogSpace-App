@@ -4,6 +4,20 @@ import "../../../models/userModel";
 import { NextResponse } from "next/server";
 import cloudinary from "../../../utils/cloudinary";
 
+// CORS headers
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS(request) {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
 const uploadToCloudinary = (fileBuffer, folder = "nextjs_blog") =>
   new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -75,13 +89,18 @@ export async function GET(req) {
       return postObj;
     });
 
-    return NextResponse.json(posts);
+    return NextResponse.json(posts, {
+      headers: corsHeaders,
+    });
   } catch (error) {
     console.error("Error fetching posts:", error);
     console.error("Error stack:", error.stack);
     return NextResponse.json(
       { error: error.message },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: corsHeaders,
+      }
     );
   }
 }
@@ -98,7 +117,10 @@ export async function POST(req) {
     if (!title || !content || !author) {
       return NextResponse.json(
         { error: "Title, content, and author are required" },
-        { status: 400 }
+        { 
+          status: 400,
+          headers: corsHeaders,
+        }
       );
     }
 
@@ -117,12 +139,17 @@ export async function POST(req) {
       created_at: new Date().toISOString(),
     });
 
-    return NextResponse.json({ success: true, post: newPost });
+    return NextResponse.json({ success: true, post: newPost }, {
+      headers: corsHeaders,
+    });
   } catch (error) {
     console.error("Error creating post:", error);
     return NextResponse.json(
       { error: error.message },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: corsHeaders,
+      }
     );
   }
 }

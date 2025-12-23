@@ -1,6 +1,20 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
 
+// CORS headers
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS(request) {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
 export async function POST(req) {
   try {
     const { username, password } = await req.json();
@@ -9,16 +23,19 @@ export async function POST(req) {
     if (!user) {
       return new Response(JSON.stringify({ message: "User not found" }), {
         status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (!user.isVerified) {
       return new Response(JSON.stringify({ message: "Please verify your email first" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (user.password !== password) {
       return new Response(JSON.stringify({ message: "Invalid password" }), {
         status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     // Return user object without password
@@ -32,10 +49,13 @@ export async function POST(req) {
       JSON.stringify({ message: "Login successful", user: userResponse }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   } catch (e) {
-    return new Response(JSON.stringify({ error: e._message }));
+    return new Response(JSON.stringify({ error: e._message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 }
