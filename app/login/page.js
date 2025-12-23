@@ -1,12 +1,24 @@
 "use client";
-import React from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-const page = () => {
+const LoginForm = () => {
   const Router = useRouter();
+  const searchParams = useSearchParams();
   const [form, setForm] = useState({});
+  const [message, setMessage] = useState(null);
+
+  useEffect(() => {
+    const verified = searchParams.get('verified');
+    const error = searchParams.get('error');
+    if (verified === 'true') {
+      setMessage({ type: 'success', text: 'Email verified successfully! You can now login.' });
+    } else if (verified === 'false') {
+      setMessage({ type: 'danger', text: error || 'Email verification failed.' });
+    }
+  }, [searchParams]);
+
   function saveForm(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -48,6 +60,11 @@ const page = () => {
       <br />
       <br />
       <div className="container " style={{ maxWidth: "1000px" }}>
+        {message && (
+            <div className={`alert alert-${message.type} m-5`} role="alert">
+                {message.text}
+            </div>
+        )}
         <form
           className="border border-2 rounded border-info p-3 m-5"
           style={{ background: "rgba(220, 248, 246, 0.49)" }}
@@ -91,4 +108,12 @@ const page = () => {
   );
 };
 
-export default page;
+const Page = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
+  );
+};
+
+export default Page;
