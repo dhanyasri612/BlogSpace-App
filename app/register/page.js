@@ -3,7 +3,7 @@ import React from "react";
 import { useState } from "react";
 import Link from "next/link";
 
-const Page = () => {
+export default function Page() {
   const [user, setUser] = useState({});
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("info"); // success, error, info
@@ -64,8 +64,6 @@ const Page = () => {
         setEmailValidation({ isValid: false, message: data.errors?.join(', ') || "Invalid email" });
       }
     } catch (error) {
-      // More graceful error handling - don't show error for network issues
-      console.warn('Email validation API unavailable:', error.message);
       setEmailValidation({ isValid: null, message: "" }); // Clear validation state instead of showing error
     }
   };
@@ -115,9 +113,7 @@ const Page = () => {
     setIsValidating(true);
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL;
-      const url = apiBase ? `${apiBase}/user` : "/api/user";
-      const res = await fetch(url, {
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -264,6 +260,4 @@ const Page = () => {
       </div>
     </div>
   );
-};
-
-export default Page;
+}

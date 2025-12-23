@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const router = useRouter();
   const pathname = usePathname();
 
   const handleLinkClick = () => {
@@ -39,9 +38,6 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    // Check user on mount
-    checkUser();
-
     // Listen for storage changes (when user logs in/out in another tab or window)
     const handleStorageChange = (e) => {
       if (e.key === "user") {

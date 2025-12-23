@@ -1,4 +1,4 @@
-import { validateEmail } from "@/utils/validation.js";
+import { validateEmailQuick } from "@/utils/validation.js";
 
 export async function POST(request) {
   try {
@@ -11,7 +11,7 @@ export async function POST(request) {
       );
     }
 
-    const validation = await validateEmail(email);
+    const validation = await validateEmailQuick(email);
     
     return new Response(
       JSON.stringify({

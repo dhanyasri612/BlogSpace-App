@@ -1,24 +1,12 @@
 "use client";
-import React, { Suspense, useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-const LoginForm = () => {
+export default function Page() {
   const Router = useRouter();
-  const searchParams = useSearchParams();
   const [form, setForm] = useState({});
-  const [message, setMessage] = useState(null);
-
-  useEffect(() => {
-    const verified = searchParams.get('verified');
-    const error = searchParams.get('error');
-    if (verified === 'true') {
-      setMessage({ type: 'success', text: 'Email verified successfully! You can now login.' });
-    } else if (verified === 'false') {
-      setMessage({ type: 'danger', text: error || 'Email verification failed.' });
-    }
-  }, [searchParams]);
-
   function saveForm(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -26,9 +14,7 @@ const LoginForm = () => {
   async function handleSubmit(e) {
     e.preventDefault();
     // Login logic here
-    const apiBase = process.env.NEXT_PUBLIC_API_URL;
-    const url = apiBase ? `${apiBase}/login` : "/api/login";
-    const res = await fetch(url, {
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -62,11 +48,6 @@ const LoginForm = () => {
       <br />
       <br />
       <div className="container " style={{ maxWidth: "1000px" }}>
-        {message && (
-            <div className={`alert alert-${message.type} m-5`} role="alert">
-                {message.text}
-            </div>
-        )}
         <form
           className="border border-2 rounded border-info p-3 m-5"
           style={{ background: "rgba(220, 248, 246, 0.49)" }}
@@ -108,14 +89,4 @@ const LoginForm = () => {
       <br />
     </div>
   );
-};
-
-const Page = () => {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginForm />
-    </Suspense>
-  );
-};
-
-export default Page;
+}

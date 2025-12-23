@@ -2,7 +2,7 @@
 import React from 'react'
 import { useState } from 'react';
 
-const page = () => {
+export default function Page() {
   const [input, setInput] = useState({});
   const [message, setMessage] = useState("");
   const handleInput =(e)=>{
@@ -73,5 +73,3 @@ const page = () => {
     </div>
   )
 }
-
-export default page
