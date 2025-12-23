@@ -60,7 +60,8 @@ export async function POST(request) {
     const createdUser = await userModel.create(user);
 
     // Send verification email
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const requestOrigin = new URL(request.url).origin;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || requestOrigin;
     const verifyLink = `${baseUrl}/api/user/verify/${createdUser._id}/${verificationToken}`;
     
     const emailSent = await sendEmail(
