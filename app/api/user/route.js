@@ -1,7 +1,7 @@
 import connectMongo from "@/utils/connectMongo";
 import userModel from "@/models/userModel.js";
 import { sendVerificationEmail } from "@/utils/smtpEmailSender.js";
-import { validateEmail } from "@/utils/emailValidator.js";
+import { validateEmail } from "@/utils/validation.js";
 
 // CORS headers
 const corsHeaders = {
