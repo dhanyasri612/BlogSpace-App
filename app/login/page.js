@@ -14,7 +14,7 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     // Login logic here
-    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/login", {
+    const res = await fetch("/api/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

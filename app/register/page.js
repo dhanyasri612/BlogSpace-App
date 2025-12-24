@@ -114,7 +114,7 @@ export default function RegisterPage() {
     setIsValidating(true);
 
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/user", {
+      const res = await fetch("/api/user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

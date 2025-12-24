@@ -9,8 +9,11 @@ export default function ContactPage() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    fetch(process.env.NEXT_PUBLIC_API_URL + "/enquiry", {
+    fetch("/api/enquiry", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(input),
     })
       .then((res) => res.json())
